@@ -1,0 +1,11 @@
+<% @routes.sort.each do |route_mash| -%>
+  <% route_mash.keys.sort.each do |route| -%>
+[<%= route %>]
+pattern = <%= route_mash[route][:pattern] %>
+destinations = <%= @graphite_hosts %>
+  <% end -%>
+
+<% end -%>
+[default]
+default = true
+destinations = <%= @graphite_hosts %>

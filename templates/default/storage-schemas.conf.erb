@@ -1,0 +1,14 @@
+<% @schemas.sort.each do |schema_mash| -%>
+  <% schema_mash.keys.sort.each do |schema| -%>
+[<%= schema %>]
+priority = <%= schema_mash[schema][:priority] %>
+pattern = <%= schema_mash[schema][:pattern] %>
+retentions = <%= schema_mash[schema][:retentions] %>
+
+  <% end -%>
+<% end -%>
+[catchall]
+priority = <%= node[:graphite][:catchall][:priority] %>
+pattern = <%= node[:graphite][:catchall][:pattern] %>
+retentions = <%= node[:graphite][:catchall][:retentions] %>
+

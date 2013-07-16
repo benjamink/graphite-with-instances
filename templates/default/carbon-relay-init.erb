@@ -1,0 +1,11 @@
+description "Graphite Carbon Relay Daemon"
+
+start on runlevel [2345]
+stop on runlevel [!2345]
+
+expect daemon
+respawn
+
+env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+exec /opt/graphite/bin/carbon-relay.py start --pidfile=<%= @pid_dir %>/carbon-relay.pid

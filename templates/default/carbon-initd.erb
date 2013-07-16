@@ -1,0 +1,74 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:          <%= @init_name %>
+# Required-Start:    $network $named $remote_fs $syslog
+# Required-Stop:     $network $named $remote_fs $syslog
+# Should-Start:      <%= @init_name %>
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+### END INIT INFO
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/opt/graphite/bin
+PYTHONPATH=/opt/graphite/lib:/opt/graphite/webapp
+DAEMON=/opt/graphite/bin/<%= @init_name %>.py
+DESC="<%= @init_name %>"
+NAME=$( echo "$DESC" | tr -s '[:lower:]' '[:upper:]' )
+PIDDIR="/var/run"
+PIDFILE="${PIDDIR}/${DESC}.pid"
+DEFAULTS="/etc/default/carbon-daemons"
+
+test -x $DAEMON || exit 0
+
+[ -r $DEFAULTS ] && . $DEFAULTS
+INSTANCES=$<%= @init_name.split('-')[1].upcase %>_INSTANCES
+
+. /lib/lsb/init-functions
+
+daemon_control() {
+  if [ ${#INSTANCES[@]} ]; then
+    for INSTANCE in $INSTANCES; do
+      $DAEMON --instance $INSTANCE \
+      --pidfile ${PIDDIR}/${DESC}-${INSTANCE}.pid \
+      $1 2>/dev/null
+      if [ "$1" = "stop" ]; then
+        rm -f ${PIDDIR}/${DESC}-${INSTANCE}.pid
+      fi
+    done
+  else
+    $DAEMON --pidfile $PIDFILE $1 2>/dev/null
+    if [ "$1" = "stop" ]; then
+      rm -f $PIDFILE
+    fi
+  fi
+}
+
+case "$1" in
+    start)
+        log_begin_msg "Starting $DESC"
+        daemon_control $1
+        ;;
+    stop)
+        log_begin_msg "Stopping $DESC"
+    daemon_control $1
+        ;;
+    restart)
+    log_begin_msg "Restarting $DESC"
+    daemon_control stop
+        sleep 1
+        daemon_control start
+        ;;
+    status)
+    log_begin_msg "Status of $DESC:"
+    for PID in ${PIDDIR}/${DESC}*; do
+      if [ -e $PID ]; then
+        echo "$(basename $PID): $(cat $PID)"
+      else
+        echo "$DESC not running."
+      fi
+        done
+        ;;
+    *)
+        echo "Usage $0 {start|stop|restart|status}" >&2
+        exit 1
+        ;;
+esac

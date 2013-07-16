@@ -1,0 +1,59 @@
+<% if node['graphite']['carbon']['cache']['enabled'] -%>
+[cache]
+LOCAL_DATA_DIR = <%= node['graphite']['carbon']['data_dir'] %>
+
+# Specify the user to drop privileges to
+# If this is blank carbon runs as the user that invokes it
+# This user must have write access to the local data directory
+USER = <%= node['graphite']['carbon']['user'] %>
+
+# Specify a PID location that makes sense.
+PID_DIR = <%= node['graphite']['pid_dir'] %>
+
+# Limit the size of the cache to avoid swapping or becoming CPU bound.
+# Sorts and serving cache queries gets more expensive as the cache grows.
+# Use the value "inf" (infinity) for an unlimited cache size.
+MAX_CACHE_SIZE = <%= node['graphite']['carbon']['max_cache_size'] %>
+
+# Limits the number of whisper update_many() calls per second, which effectively
+# means the number of write requests sent to the disk. This is intended to
+# prevent over-utilizing the disk and thus starving the rest of the system.
+# When the rate of required updates exceeds this, then carbon's caching will
+# take effect and increase the overall throughput accordingly.
+MAX_UPDATES_PER_SECOND = <%= node['graphite']['carbon']['max_updates_per_second'] %>
+
+# Softly limits the number of whisper files that get created each minute.
+# Setting this value low (like at 50) is a good way to ensure your graphite
+# system will not be adversely impacted when a bunch of new metrics are
+# sent to it. The trade off is that it will take much longer for those metrics'
+# database files to all get created and thus longer until the data becomes usable.
+# Setting this value high (like "inf" for infinity) will cause graphite to create
+# the files quickly but at the risk of slowing I/O down considerably for a while.
+MAX_CREATES_PER_MINUTE = <%= node['graphite']['carbon']['max_creates_per_minute'] %>
+
+# By default, carbon-cache will log every whisper update. This can be excessive and
+# degrade performance if logging on the same volume as the whisper data is stored.
+LOG_UPDATES = <%= node[:graphite][:carbon][:log_updates] %>
+
+<%   @caches.keys.sort.each do |cache| -%>
+[cache:<%= cache %>]
+<%   @caches[cache].keys.sort.each do |attrib| -%>
+<%= attrib.upcase %> = <%= @caches[cache][attrib] %>
+<%   end -%>
+
+<%   end -%>
+<% end -%>
+
+<% if node['graphite']['carbon']['relay']['enabled'] -%>
+<%   @relays.keys.sort.each do |relay| -%>
+[relay:<%= relay %>]
+<%     @relays[relay].sort.each do |key, value| -%>
+<%       if key == 'destinations' -%>
+DESTINATIONS = <%= @graphite_hosts %>
+<%       else -%>
+<%= key.upcase %> = <%= value %>
+<%       end -%>
+<%     end -%>
+
+<%   end -%>
+<% end -%>
